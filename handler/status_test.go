@@ -52,4 +52,28 @@ func TestHealthCheckHandler(t *testing.T) {
 		// The payload should be {"status": "OK"}, indicating a successful health check.
 		assert.Equal(t, `{"status": "OK"}`, rr.Body.String(), "Expected response body to be {\"status\": \"OK\"}")
 	})
+
+	// InvalidRequest tests the behavior of the HealthCheckHandler method when an invalid request is received.
+	// This test ensures that the method ignores requests with methods other than GET, such as POST,
+	// and does not produce a response body or set headers, adhering to the expected behavior for health checks.
+	// The goal is to verify that the handler enforces the use of GET requests for health check endpoints.
+	t.Run("InvalidRequest", func(t *testing.T) {
+		// Create a new HTTP POST request to simulate an invalid health check request.
+		// Health checks typically only allow GET requests, so this tests the handler's behavior for other methods.
+		req, err := http.NewRequest(http.MethodPost, "/health", nil)
+		// Assert that no error occurred during request creation to ensure the test setup is valid.
+		assert.NoError(t, err, "Expected no error when creating POST request for health check")
+
+		// Create a ResponseRecorder to capture the handler's response.
+		// This allows inspection of the response to verify the handler's behavior for non-GET requests.
+		rr := httptest.NewRecorder()
+
+		// Call the HealthCheckHandler method with the response recorder and request.
+		// This simulates the server processing an invalid (non-GET) request and writing the response.
+		handler.HealthCheckHandler(rr, req)
+
+		// Assert that the response body is empty for non-GET requests.
+		// Since the handler only processes GET requests, no response body should be written.
+		assert.Empty(t, rr.Body.String(), "Expected empty response body for non-GET request")
+	})
 }
