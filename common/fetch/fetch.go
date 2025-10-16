@@ -8,9 +8,18 @@ import (
 	"github.com/rs/zerolog"
 )
 
+type FetcherOptions func(*Fetcher)
+
+func SetTransport(transport http.RoundTripper) FetcherOptions {
+	return func(f *Fetcher) {
+		f.transport = transport
+	}
+}
+
 type Fetcher struct {
-	client *http.Client
-	logger *zerolog.Logger
+	client    *http.Client
+	logger    *zerolog.Logger
+	transport http.RoundTripper
 }
 
 func New(log *zerolog.Logger) *Fetcher {
