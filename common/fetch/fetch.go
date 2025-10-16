@@ -16,10 +16,17 @@ func SetTransport(transport http.RoundTripper) FetcherOptions {
 	}
 }
 
+func SetUserAgent(userAgent string) FetcherOptions {
+	return func(f *Fetcher) {
+		f.userAgent = userAgent
+	}
+}
+
 type Fetcher struct {
 	client    *http.Client
-	logger    *zerolog.Logger
 	transport http.RoundTripper
+	userAgent string
+	logger    *zerolog.Logger
 }
 
 func New(log *zerolog.Logger) *Fetcher {
