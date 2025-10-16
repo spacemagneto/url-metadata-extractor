@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
@@ -30,5 +31,22 @@ func TestFetcher(t *testing.T) {
 		response, err := fetcher.Fetch(context.Background(), server.URL)
 		assert.NoError(t, err)
 		assert.NotNil(t, response)
+	})
+
+	t.Run("RealRequest", func(t *testing.T) {
+		fetcher := &Fetcher{
+			client: &http.Client{
+				Timeout: 10 * time.Second,
+			},
+			logger: &logger,
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+
+		response, err := fetcher.Fetch(ctx, "https://www.nytimes.com")
+		assert.NoError(t, err)
+		assert.NotNil(t, response)
+		assert.Equal(t, http.StatusOK, response.StatusCode)
 	})
 }
