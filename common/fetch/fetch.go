@@ -38,6 +38,14 @@ func Headers(headers map[string]string) FetcherOptions {
 	}
 }
 
+func Client(client *http.Client) FetcherOptions {
+	return func(f *Fetcher) {
+		if client != nil {
+			f.client = client
+		}
+	}
+}
+
 type Fetcher struct {
 	client    *http.Client
 	transport http.RoundTripper
