@@ -10,23 +10,39 @@ import (
 
 type FetcherOptions func(*Fetcher)
 
-func SetTransport(transport http.RoundTripper) FetcherOptions {
+func Transport(transport http.RoundTripper) FetcherOptions {
 	return func(f *Fetcher) {
 		f.transport = transport
 	}
 }
 
-func SetUserAgent(userAgent string) FetcherOptions {
+func UserAgent(userAgent string) FetcherOptions {
 	return func(f *Fetcher) {
-		f.userAgent = userAgent
+		if f.headers == nil {
+			customHeaders := make(http.Header)
+			f.headers = &customHeaders
+		}
+
+		f.headers.Set("User-Agent", userAgent)
+	}
+}
+
+func Headers(headers map[string]string) FetcherOptions {
+	return func(f *Fetcher) {
+		customHeaders := make(http.Header)
+		for header, value := range headers {
+			customHeaders.Add(header, value)
+		}
+
+		f.headers = &customHeaders
 	}
 }
 
 type Fetcher struct {
 	client    *http.Client
 	transport http.RoundTripper
-	userAgent string
 	logger    *zerolog.Logger
+	headers   *http.Header
 }
 
 func New(log *zerolog.Logger) *Fetcher {
