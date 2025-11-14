@@ -1,6 +1,7 @@
 package fetch
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -59,5 +60,24 @@ func TestTraceRequest(t *testing.T) {
 
 		totalToFirstByte := tracer.requestDuration + tracer.firstByteDuration
 		assert.GreaterOrEqual(t, totalToFirstByte, 75*time.Millisecond, "Total time from connect to first byte must include server processing delay")
+	})
+
+	// ContextCancellationIsSafe verifies that TraceRequest does not panic when the request
+	// is cancelled via context immediately after attaching the trace. Even if httptrace
+	// callbacks fire after cancellation, the implementation must remain safe and only
+	// return a proper context error - critical for production use with timeouts or aborts.
+	t.Run("ContextCancellationIsSafe", func(t *testing.T) {
+		tracer := &TraceRequest{}
+
+		req, _ := http.NewRequest("GET", "http://example.com", nil)
+		ctx, cancel := context.WithTimeout(req.Context(), 1*time.Millisecond)
+		req = req.WithContext(ctx)
+		req = tracer.TraceRequest(req)
+		cancel()
+
+		_, err := http.DefaultClient.Do(req)
+
+		assert.Error(t, err, "Cancelled request must return an error")
+		assert.Contains(t, err.Error(), "context", "Error must be context-related")
 	})
 }
